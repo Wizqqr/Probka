@@ -32,7 +32,7 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const confirmationCode = crypto.randomInt(100000, 999999).toString();
+    const confirmationCode = crypto.randomInt(1000, 9999).toString();
 
     const newUser = new User({
       name,
@@ -46,16 +46,12 @@ export const register = async (req, res) => {
 
     await newUser.save();
 
-    try {
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
         html: `<h1>Confirmation Code</h1><p>Your confirmation code is: <strong>${confirmationCode}</strong></p>`,
       });
       console.log('Email sent successfully!');
-    } catch (error) {
-      console.error('Error sending email:', error);
-    }
     
 
     const token = generateToken(newUser);
