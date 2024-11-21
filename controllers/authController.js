@@ -46,12 +46,18 @@ export const register = async (req, res) => {
 
     await newUser.save();
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Confirmation Code',
-      html: `<h1>Confirmation Code</h1><p>Your confirmation code is: <strong>${confirmationCode}</strong></p>`,
-    });
+    try {
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: 'recipient@example.com',
+        subject: 'Test Email',
+        text: 'This is a test email',
+      });
+      console.log('Email sent successfully!');
+    } catch (error) {
+      console.error('Error sending email:', error);
+    }
+    
 
     const token = generateToken(newUser);
 
