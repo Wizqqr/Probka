@@ -9,7 +9,7 @@ import authRoutes from './routes/authRoutes.js';
 import tripRoutes from './routes/tripRoutes.js';
 dotenv.config();
 
-export const app = express();
+const app = express();
 
 connectDB();
 
