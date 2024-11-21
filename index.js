@@ -10,6 +10,7 @@ import tripRoutes from './routes/tripRoutes.js';
 dotenv.config();
 
 const app = express();
+module.exports = app
 
 connectDB();
 
