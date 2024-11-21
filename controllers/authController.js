@@ -49,9 +49,8 @@ export const register = async (req, res) => {
     try {
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
-        to: 'recipient@example.com',
-        subject: 'Test Email',
-        text: 'This is a test email',
+        to: email,
+        html: `<h1>Confirmation Code</h1><p>Your confirmation code is: <strong>${confirmationCode}</strong></p>`,
       });
       console.log('Email sent successfully!');
     } catch (error) {
