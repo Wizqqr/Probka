@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.get('/getNews', getAll);
 
-router.get('/getNews:id', checkAuth, getOne);
+router.get('/getNews/:id', getOne);
 
-router.post('/createNews', create)
+router.post('/createNews', create);
 export default router;

@@ -21,19 +21,19 @@ export const getAll = async (req, res) => {
 
 export const getOne = async (req, res) => {
   try {
-    const { id } = req.params;
+    const idNews = parseInt(req.params.id, 10);
 
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    if (isNaN(idNews)) {
       return res.status(400).json({
-        message: 'Некорректный ID поста',
+        message: 'Некорректный ID новости',
       });
     }
 
-    const news = await News.findById(id);
+    const news = await News.findOne({ idNews });
 
     if (!news) {
       return res.status(404).json({
-        message: 'Пост не найден',
+        message: 'Новость не найдена',
       });
     }
 
@@ -41,24 +41,34 @@ export const getOne = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({
-      message: 'Не удалось получить пост',
+      message: 'Не удалось получить новость',
     });
   }
 };
 
-export const create = async (req,res) =>{
-  try{
-      const doc = new News({
-          title: req.body.title,
-          text: req.body.text,
-          imageUrl: req.body.imageUrl,
-      });
 
-      const post = await doc.save();
-      res.json(post);
+export const create = async (req, res) => {
+  try {
+    // Найти последний созданный документ
+    const lastNews = await News.findOne().sort({ idNews: -1 });
 
-  }catch(err){
-      console.log(err);
-      res.status(500).json({message: err.message})
+    // Если записей нет, начинать с 1
+    const idNews = lastNews && lastNews.idNews ? lastNews.idNews + 1 : 1;
+
+    // Создать новый документ
+    const doc = new News({
+      idNews, // Установить idNews
+      title: req.body.title,
+      text: req.body.text,
+      imageUrl: req.body.imageUrl,
+    });
+
+    // Сохранить документ
+    const post = await doc.save();
+    res.status(201).json(post);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Не удалось создать новость' });
   }
-}
+};
+

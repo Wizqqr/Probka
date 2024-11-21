@@ -2,6 +2,11 @@ import mongoose from 'mongoose';
 
 const newsSchema = new mongoose.Schema(
   {
+    idNews: {
+      type: Number,
+      required: true,
+      unique: true,
+    },
     title: {
       type: String,
       required: true,
