@@ -16,4 +16,3 @@ export const sendSMS = async (to, body) => {
     console.error('Error sending SMS:', error);
   }
 };
-
