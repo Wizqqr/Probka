@@ -12,7 +12,7 @@ export const sendSMS = async (to, body) => {
         to: to
     })
     .then(message => console.log(message.sid));
-  } catch (error) {
+  }catch (error) {
     console.error('Error sending SMS:', error);
   }
 };
