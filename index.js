@@ -29,10 +29,4 @@ app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
 
-import path from 'path';
-
-const fullPath = path.join(path.dirname(import.meta.url), 'routes', 'authRoutes.js');
-
-console.log(fullPath);  
-
 
