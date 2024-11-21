@@ -31,7 +31,7 @@ app.listen(PORT, () => {
 
 import path from 'path';
 
-const fullPath = path.join(path.dirname(import.meta.url), 'index.js');
+const fullPath = path.join(path.dirname(import.meta.url), 'routes', 'authRoutes.js');
 
 console.log(fullPath);  
 
