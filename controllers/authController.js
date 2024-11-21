@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import { sendSMS } from '../config/twilio.js'
 import jwt from 'jsonwebtoken';
-
+import transporter from '../config/nodemailer.js';
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -15,48 +15,58 @@ const generateToken = (user) => {
 
 
 export const register = async (req, res) => {
-    const { name, email, phone, password, cars_id } = req.body;
-  
-    if (!cars_id || cars_id.length === 0) {
-      return res.status(400).json({ message: 'You must provide at least one car number.' });
+  const { name, email, phone, password, cars_id } = req.body;
+
+  if (!cars_id || cars_id.length === 0) {
+    return res.status(400).json({ message: 'You must provide at least one car number.' });
+  }
+
+  if (password.length < 8) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters long' });
+  }
+
+  try {
+    const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email or phone already in use' });
     }
-  
-    if (password.length < 8) {
-      return res.status(400).json({ message: 'Password must be at least 8 characters long' });
-    }
-  
-    try {
-      const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
-      if (existingUser) {
-        return res.status(400).json({ message: 'Email or phone already in use' });
-      }
-  
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const confirmationCode = crypto.randomInt(100000, 999999).toString();
-  
-      const newUser = new User({
-        name,
-        email,
-        phone,
-        password_hash: hashedPassword,
-        cars_id, 
-        confirmationCode,
-        codeGeneratedAt: Date.now(),
-      });
-  
-      await newUser.save();
-  
-      await sendSMS(
-        phone,
-        `Your confirmation code is ${confirmationCode}. Valid for 10 minutes.`
-      );
-  
-      res.status(201).json({ message: 'User registered successfully. Confirmation code sent via SMS.' });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Error registering user', error });
-    }
-  };
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const confirmationCode = crypto.randomInt(100000, 999999).toString();
+
+    const newUser = new User({
+      name,
+      email,
+      phone,
+      password_hash: hashedPassword,
+      cars_id,
+      confirmationCode,
+      codeGeneratedAt: Date.now(),
+    });
+
+    await newUser.save();
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Confirmation Code',
+      html: `<h1>Confirmation Code</h1><p>Your confirmation code is: <strong>${confirmationCode}</strong></p>`,
+    });
+
+    const token = generateToken(newUser);
+
+    res.status(201).json({
+      message: 'User registered successfully. Confirmation code sent via SMS and Email.',
+      user_id: newUser.user_id,
+      confirmationCode: newUser.confirmationCode,
+      token
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error registering user', error });
+  }
+};
+
   
 export const login = async (req, res) => {
     const { phone, password } = req.body;
@@ -78,7 +88,6 @@ export const login = async (req, res) => {
       user.loginCodeGeneratedAt = Date.now();
       await user.save();
   
-      await sendSMS(user.phone, `Your login code is ${loginCode}. Valid for 10 minutes.`);
   
       const token = generateToken(user);
 
@@ -89,17 +98,19 @@ export const login = async (req, res) => {
     }
   };
 
-export const verifyCode = async (req, res) => {
-    const { phone, code } = req.body;
+  export const verifyCode = async (req, res) => {
+    const { phone, email, code } = req.body;
   
     try {
-      const user = await User.findOne({ phone });
+      const user = await User.findOne({ $or: [{ phone }, { email }] });
   
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
   
-      const isCodeValid = user.confirmationCode === code && (Date.now() - user.codeGeneratedAt) < 10 * 60 * 1000;
+      const isCodeValid =
+        user.confirmationCode === code &&
+        Date.now() - user.codeGeneratedAt < 10 * 60 * 1000;
   
       if (!isCodeValid) {
         return res.status(400).json({ message: 'Invalid or expired confirmation code' });
@@ -110,12 +121,13 @@ export const verifyCode = async (req, res) => {
       user.codeGeneratedAt = undefined;
       await user.save();
   
-      res.status(200).json({ message: 'Phone number verified successfully!' });
+      res.status(200).json({ message: 'Verification successful!' });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Error verifying code', error });
     }
   };
+  
 
   export const forgotPassword = async (req, res) => {
     const { phone } = req.body;
