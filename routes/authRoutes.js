@@ -9,6 +9,6 @@ router.post('/login', login);
 router.post('/verify-code', verifyCode);
 router.post('/reset-password', forgotPassword);
 router.post('/reset-password/confirm', resetPassword);
-router.get('/getme',checkAuth, getMe  )
+router.get('/getme', checkAuth, getMe  )
 
 export default router;
