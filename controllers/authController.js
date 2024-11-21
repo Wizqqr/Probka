@@ -24,13 +24,12 @@ export const register = async (req, res) => {
   if (password.length < 8) {
     return res.status(400).json({ message: 'Password must be at least 8 characters long' });
   }
+  const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
+  if (existingUser) {
+    return res.status(400).json({ message: 'Email or phone already in use' });
+  }
 
   try {
-    const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Email or phone already in use' });
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10);
     const confirmationCode = crypto.randomInt(1000, 9999).toString();
 
@@ -46,12 +45,12 @@ export const register = async (req, res) => {
 
     await newUser.save();
 
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: email,
-        html: `<h1>Confirmation Code</h1><p>Your confirmation code is: <strong>${confirmationCode}</strong></p>`,
-      });
-      console.log('Email sent successfully!');
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Confirmation Code',
+      html: `<h1>Confirmation Code</h1><p>Your confirmation code is: <strong>${confirmationCode}</strong></p>`,
+    });
     
 
     const token = generateToken(newUser);
