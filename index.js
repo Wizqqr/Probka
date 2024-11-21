@@ -29,4 +29,6 @@ app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
 
-
+app.get('/', (req, res) => {
+    res.send('<h1>Hello to API!</h1>');  // Ответ на корневой маршрут
+});

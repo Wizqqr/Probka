@@ -12,4 +12,5 @@ router.post('/verify-code', authLimiter, verifyCode);
 router.post('/reset-password', authLimiter, forgotPassword);
 router.post('/reset-password/confirm', authLimiter, resetPassword);
 router.get('/getme',checkAuth, getMe  )
+
 export default router;
