@@ -2,6 +2,17 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import { sendSMS } from '../config/twilio.js'
+import jwt from 'jsonwebtoken';
+
+
+const generateToken = (user) => {
+  return jwt.sign(
+    { _id: user._id, email: user.email },
+    'secret123',
+    { expiresIn: '30d' }
+  );
+};
+
 
 export const register = async (req, res) => {
     const { name, email, phone, password, cars_id } = req.body;
@@ -69,7 +80,9 @@ export const login = async (req, res) => {
   
       await sendSMS(user.phone, `Your login code is ${loginCode}. Valid for 10 minutes.`);
   
-      res.status(200).json({ message: 'Login successful. Code sent via SMS.' });
+      const token = generateToken(user);
+
+      res.status(200).json({ message: 'Login successful. Code sent via SMS.', token });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Error logging in', error });
@@ -165,7 +178,18 @@ export const verifyCode = async (req, res) => {
     }
   };
   
-
+  export const getMe = async (req, res) => {
+    try {
+      const user = await User.findById(req.userId).select('-password');
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      res.status(200).json(user);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Error retrieving user information', error });
+    }
+  };
 
 
 

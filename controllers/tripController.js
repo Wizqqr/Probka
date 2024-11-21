@@ -40,18 +40,48 @@ export const endTrip = async (req, res) => {
       return res.status(404).json({ message: 'Trip not found' });
     }
 
-    const distance = calculateDistance(trip.start_location, end_location); 
-    const points_earned = calculatePoints(distance, speed_data);
+    const distance = calculateDistance(trip.start_location, end_location);
+    const pointsEarned = calculatePoints(distance, speed_data);
 
     trip.end_location = end_location;
     trip.end_time = end_time;
     trip.distance = distance;
     trip.speed_data = speed_data;
-    trip.points_earned = points_earned;
+    trip.points_earned = pointsEarned;
 
     await trip.save();
 
-    res.status(200).json({ points_earned });
+    const user = await User.findById(trip.user_id);
+    user.points += pointsEarned;
+
+    const { level, pointsToNextLevel } = calculateLevel(user.points);
+    user.level = level;
+
+    await user.save();
+
+    res.status(200).json({ points_earned: pointsEarned, level, points_to_next_level: pointsToNextLevel });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getUserLevel = async (req, res) => {
+  try {
+    const { user_id } = req.query;
+
+    const user = await User.findById(user_id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const { level, pointsToNextLevel } = calculateLevel(user.points);
+
+    res.status(200).json({
+      level,
+      points: user.points,
+      points_to_next_level: pointsToNextLevel,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -83,16 +113,33 @@ const calculateDistance = (start_location, end_location) => {
   return Math.random() * 100; 
 };
 
-const calculatePoints = (distance, speed_data) => {
-  let points = 0;
+const calculateLevel = (points) => {
+  const levels = [100, 300, 600, 1000]; // Прогресс для перехода между уровнями
+  let level = 1;
 
-  points += Math.floor(distance);
+  for (let i = 0; i < levels.length; i++) {
+    if (points >= levels[i]) {
+      level = i + 2; // Уровни начинаются с 1
+    } else {
+      break;
+    }
+  }
+
+  const pointsToNextLevel = levels[level - 1] ? levels[level - 1] - points : 0;
+  return { level, pointsToNextLevel };
+};
+
+const calculatePoints = (distance, speed_data) => {
+  let points = Math.floor(distance);
 
   speed_data.forEach(speed => {
     if (speed > 50) {
       points += 5; 
     }
+    if (speed > 80) {
+      points -= 10; // Штраф за скорость выше 80
+    }
   });
 
-  return points;
+  return points > 0 ? points : 0; 
 };

@@ -7,6 +7,9 @@ import passport from 'passport';
 import session from 'express-session';
 import authRoutes from './routes/authRoutes.js';
 import tripRoutes from './routes/tripRoutes.js';
+import rewardRoutes from './routes/rewardRoutes.js'
+import checkAuth from './utils/checkAuth.js';
+
 dotenv.config();
 
 const app = express();
@@ -14,12 +17,22 @@ const app = express();
 connectDB();
 
 app.use(express.json());
+app.use(cors());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/trip', tripRoutes);
+app.use('/api/', rewardRoutes);
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
+import path from 'path';
+
+const fullPath = path.join(path.dirname(import.meta.url), 'index.js');
+
+console.log(fullPath);  
+
+
