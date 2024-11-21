@@ -14,6 +14,7 @@ connectDB();
 
 app.use(express.json());
 app.use(cors());
+app.set('trust proxy', 1); // Trust the first proxy (Render sets this header)
 
 app.use('/api/auth', authRoutes);
 app.use('/api/trip', tripRoutes);

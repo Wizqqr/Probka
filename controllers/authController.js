@@ -51,6 +51,11 @@ export const register = async (req, res) => {
       to: email,
       subject: 'Confirmation Code',
       html: `<h1>Confirmation Code</h1><p>Your confirmation code is: <strong>${confirmationCode}</strong></p>`,
+    }, (error, info) => {
+      if (error) {
+        return console.error('Error:', error);
+      }
+      console.log('Email sent:', info.response);
     });
 
     const token = generateToken(newUser);
