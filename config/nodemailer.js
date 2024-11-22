@@ -22,6 +22,7 @@ const transporter = nodemailer.createTransport(transport)
         }
     })
 
+
 // const transporter = nodemailer.createTransport({
 //   host: 'smtp.gmail.com',
 //   port: 465,
@@ -32,4 +33,4 @@ const transporter = nodemailer.createTransport(transport)
 //   }
 // });
 
-// export default transporter;
+export default transporter;

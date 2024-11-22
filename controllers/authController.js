@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import { sendSMS } from '../config/twilio.js'
 import jwt from 'jsonwebtoken';
+import transporter from '../config/nodemailer.js';
 
 const generateToken = (user) => {
   return jwt.sign(
