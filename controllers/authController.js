@@ -23,6 +23,7 @@ export const register = async (req, res) => {
   if (password.length < 8) {
     return res.status(400).json({ message: 'Password must be at least 8 characters long' });
   }
+
   const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
   if (existingUser) {
     return res.status(400).json({ message: 'Email or phone already in use' });
@@ -44,27 +45,41 @@ export const register = async (req, res) => {
 
     await newUser.save();
 
-    // await transporter.sendMail({
-    //   from: process.env.EMAIL_USER,
-    //   to: email,
-    //   subject: 'Confirmation Code',
-    //   html: `<h1>Confirmation Code</h1><p>Your confirmation code is: <strong>${confirmationCode}</strong></p>`,
-    // });
-    
+    const mail = {
+      from: process.env.SMTP_FROM_EMAIL,
+      to: email, 
+      subject: 'Confirmation Code',
+      text: `
+        Dear ${name},
+
+        Your confirmation code is: ${confirmationCode}
+        
+        Regards,
+        Your Team
+      `,
+    };
+
+    transporter.sendMail(mail, (err, data) => {
+      if (err) {
+        console.error('Error sending confirmation email:', err);
+        return res.status(500).json({ message: 'Error sending confirmation email' });
+      }
+    });
 
     const token = generateToken(newUser);
 
     res.status(201).json({
-      message: 'User registered successfully. Confirmation code sent via SMS and Email.',
+      message: 'User registered successfully. Confirmation code sent via email.',
       user_id: newUser.user_id,
       confirmationCode: newUser.confirmationCode,
-      token
+      token,
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error registering user:', error);
     res.status(500).json({ message: 'Error registering user', error });
   }
 };
+
 
   
 export const login = async (req, res) => {
